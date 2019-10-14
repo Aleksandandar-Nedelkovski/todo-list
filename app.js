@@ -10,7 +10,7 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-mongoose.connect('mongodb://localhost:27017/todolistDB', { useNewUrlParser: true });
+mongoose.connect('mongodb://localhost:27017/todolistDB', { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 const itemsSchema = {
@@ -19,8 +19,37 @@ const itemsSchema = {
 
 const Item = mongoose.model("Item", itemsSchema);
 
+const item1 = new Item({
+    name: "Grocery shopping"
+})
+
+const item2 = new Item({
+    name: "Rake leaves"
+})
+
+const item3 = new Item({
+    name: "Study JavaScript OOP"
+});
+
+const defaultItems = [item1, item2, item3];
+
+
+
 app.get("/", function (req, res) {
-    res.render("list", { listTitle: "Today", newListItems: items });
+    Item.find({}, function (err, foundItems) {
+        if (foundItems.length === 0) {
+            Item.insertMany(defaultItems, function (err) {
+                if (err) {
+                    console.log("Errors:" + err);
+                } else {
+                    console.log("Items:" + defaultItems);
+                }
+            });
+            res.redirect("/");
+        } else {
+            res.render("list", { listTitle: "Today", newListItems: foundItems });
+        }
+    });
 });
 
 app.post("/", function (req, res) {
